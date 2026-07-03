@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+<title>配送件数入力</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  :root {
+    --theme-color: #4B9CB3;
+    --theme-light: #E8F3F6;
+    --theme-dark: #2D6A7A;
+    --bg-color: #F4F7F8;
+    --card-radius: 12px;
+    --amber: #E8B33D;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-color); color: #333;
+    min-height: 100vh; min-height: 100dvh;
+    padding: 20px 15px calc(20px + env(safe-area-inset-bottom));
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 20px; }
+  .header h1 { font-size: 19px; font-weight: bold; color: var(--theme-dark); margin: 0 0 4px; }
+  .header .sub { font-size: 12px; color: #888; }
+
+  .card {
+    background: #fff; padding: 16px 16px 18px; margin-bottom: 14px;
+    border-radius: var(--card-radius); box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    border-top: 4px solid var(--theme-color);
+  }
+  .card-title {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: bold;
+    color: var(--theme-dark); margin-bottom: 12px; letter-spacing: .03em;
+  }
+  .card-title .material-icons { font-size: 16px; color: var(--theme-color); }
+
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: bold; color: #777; margin-bottom: 6px;
+  }
+  .field label .material-icons { font-size: 15px; color: var(--theme-color); }
+
+  select, input[type=date] {
+    width: 100%; padding: 13px 16px; font-size: 16px; font-family: inherit; color: #333;
+    background: var(--bg-color); border: 2px solid transparent; border-radius: 30px;
+    appearance: none; -webkit-appearance: none; min-height: 48px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  select:focus, input:focus { outline: none; border-color: var(--theme-color); box-shadow: 0 4px 10px rgba(75,156,179,0.15); }
+
+  .count-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .count-row select {
+    text-align: center; font-weight: bold; padding: 13px 4px; border-radius: 14px;
+  }
+
+  #submitBtn {
+    width: 100%; padding: 15px; font-size: 16px; font-weight: bold; font-family: inherit;
+    color: #fff; background: var(--theme-color); border: none; border-radius: 30px; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(75,156,179,0.3); transition: 0.2s;
+  }
+  #submitBtn:active { transform: scale(0.96); background: var(--theme-dark); }
+  #submitBtn:disabled { background: #bbb; box-shadow: none; }
+
+  .result {
+    margin-top: 14px; padding: 13px 16px; border-radius: var(--card-radius); font-size: 13.5px;
+    display: none; line-height: 1.6;
+  }
+  .result.ok { display: block; background: var(--theme-light); color: var(--theme-dark); border: 1px solid var(--theme-color); }
+  .result.err { display: block; background: #fdeaea; color: #a33; border: 1px solid #e2a3a3; }
+  .stamp {
+    display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1.5px solid var(--amber);
+    color: #8A6416; font-size: 11px; font-weight: bold; border-radius: 2px; transform: rotate(-4deg);
+  }
+
+  #historyBtn {
+    width: 100%; padding: 12px; margin-top: 20px; font-size: 14px; font-weight: bold;
+    color: var(--theme-dark); background: transparent; border: 2px solid var(--theme-color);
+    border-radius: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: 0.2s;
+  }
+  #historyBtn:active { background: var(--theme-light); }
+  .history-container {
+    margin-top: 14px; background: #fff; border-radius: var(--card-radius);
+    padding: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); display: none;
+    max-height: 400px; overflow-y: auto;
+  }
+  .history-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px dashed #ddd; font-size: 13px;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-date { font-weight: bold; color: var(--theme-dark); width: 45px; }
+  .history-badge { width: 55px; text-align: center; }
+  .history-details { display: flex; gap: 8px; color: #555; flex: 1; justify-content: flex-end; }
+  .history-details span { background: var(--theme-light); padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>配送件数入力</h1>
+      <div class="sub" id="todayLabel"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="material-icons">person</span>入力者・日付</div>
+      <div class="field">
+        <label><span class="material-icons">apartment</span>センター</label>
+        <select id="center"></select>
+      </div>
+      <div class="field">
+        <label><span class="material-icons">badge</span>メンバー名</label>
+        <select id="memberName"><option value="">読み込み中...</option></select>
+      </div>
+      <div class="field">
+        <label><span class="material-icons">event</span>日付</label>
+        <input type="date" id="dateStr">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="material-icons">local_shipping</span>件数</div>
+      <div class="count-row">
+        <div class="field">
+          <label><span class="material-icons">storefront</span>店</label>
+          <select id="store"></select>
+        </div>
+        <div class="field">
+          <label><span class="material-icons">home</span>利宅</label>
+          <select id="riyaku"></select>
+        </div>
+        <div class="field">
+          <label><span class="material-icons">bolt</span>当日</label>
+          <select id="tojitsu"></select>
+        </div>
+      </div>
+    </div>
+
+    <button id="submitBtn">登録する</button>
+    <div id="result" class="result"></div>
+
+    <button id="historyBtn"><span class="material-icons">fact_check</span>選択月の入力状況を確認</button>
+    <div id="historyContainer" class="history-container">
+      <div id="historyContent"></div>
+    </div>
+  </div>
+
+<script>
+  // ここをデプロイしたGASのウェブアプリURLに差し替えてください
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyO_qsQL17tE3_aotBjhifc0A9jLZP0WppFiG78gfEaTBlANZHCIHASNF421qtZWu26/exec';
+  const DEFAULT_CENTER = '天理';
+
+  function fillCountSelect(id){
+    const sel = document.getElementById(id);
+    for(let i=0;i<=10;i++){
+      const opt = document.createElement('option');
+      opt.value = i; opt.text = i;
+      sel.appendChild(opt);
+    }
+  }
+  ['store','riyaku','tojitsu'].forEach(fillCountSelect);
+
+  const dateInput = document.getElementById('dateStr');
+  const today = new Date();
+  dateInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  dateInput.min = '2026-03-01';
+  dateInput.max = '2027-02-28';
+  document.getElementById('todayLabel').innerText =
+    today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
+
+  async function loadCenters(){
+    const res = await fetch(API_URL + '?action=centers');
+    const json = await res.json();
+    const sel = document.getElementById('center');
+    if(json.ok){
+      json.data.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name; opt.text = name;
+        if(name === DEFAULT_CENTER) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+    loadMembers();
+  }
+
+  async function loadMembers(){
+    const center = document.getElementById('center').value;
+    const dateStr = document.getElementById('dateStr').value;
+    const memberSel = document.getElementById('memberName');
+    const previousValue = memberSel.value;
+
+    const res = await fetch(API_URL + '?action=members&center=' + encodeURIComponent(center) + '&date=' + encodeURIComponent(dateStr));
+    const json = await res.json();
+    memberSel.innerHTML = '';
+    if(!json.ok || json.data.length === 0){
+      memberSel.innerHTML = '<option value="">見つかりません</option>';
+      return;
+    }
+    json.data.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.text = name;
+      memberSel.appendChild(opt);
+    });
+    if(previousValue && json.data.includes(previousValue)){
+      memberSel.value = previousValue;
+    }
+  }
+
+  document.getElementById('center').addEventListener('change', loadMembers);
+  document.getElementById('dateStr').addEventListener('change', loadMembers);
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('submitBtn');
+    const resultEl = document.getElementById('result');
+    resultEl.className = 'result'; resultEl.innerText = '';
+
+    const data = {
+      center: document.getElementById('center').value,
+      memberName: document.getElementById('memberName').value,
+      dateStr: document.getElementById('dateStr').value,
+      store: document.getElementById('store').value,
+      riyaku: document.getElementById('riyaku').value,
+      tojitsu: document.getElementById('tojitsu').value
+    };
+    if(!data.memberName){
+      resultEl.className = 'result err';
+      resultEl.innerText = 'メンバー名を選択してください';
+      return;
+    }
+
+    btn.disabled = true; btn.innerText = '登録中...';
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if(json.ok){
+        resultEl.className = 'result ok';
+        resultEl.innerHTML = '登録済み<span class="stamp">済</span><br>' + json.data.detail;
+        document.getElementById('store').value = 0;
+        document.getElementById('riyaku').value = 0;
+        document.getElementById('tojitsu').value = 0;
+      } else {
+        resultEl.className = 'result err';
+        resultEl.innerText = 'エラー: ' + json.error;
+      }
+    } catch(err) {
+      resultEl.className = 'result err';
+      resultEl.innerText = '通信エラー: ' + err.message;
+    }
+    btn.disabled = false; btn.innerText = '登録する';
+  });
+
+  document.getElementById('historyBtn').addEventListener('click', toggleHistory);
+
+  async function toggleHistory() {
+    const container = document.getElementById('historyContainer');
+    const content = document.getElementById('historyContent');
+    const btn = document.getElementById('historyBtn');
+
+    if (container.style.display === 'none' || container.style.display === '') {
+      container.style.display = 'block';
+      content.innerHTML = '<div style="text-align:center;color:#888;padding:10px;">読み込み中...</div>';
+      btn.innerHTML = '<span class="material-icons">expand_less</span>入力を閉じる';
+
+      const center = document.getElementById('center').value;
+      const memberName = document.getElementById('memberName').value;
+      const dateStr = document.getElementById('dateStr').value;
+
+      if (!memberName) {
+        content.innerHTML = '<div style="text-align:center;color:#a33;padding:10px;">メンバーを選択してください</div>';
+        return;
+      }
+
+      try {
+        const res = await fetch(API_URL + '?action=history&center=' + encodeURIComponent(center) +
+          '&memberName=' + encodeURIComponent(memberName) + '&date=' + encodeURIComponent(dateStr));
+        const json = await res.json();
+        if(!json.ok){
+          content.innerHTML = `<div style="color:#a33;padding:10px;">エラー: ${json.error}</div>`;
+          return;
+        }
+        const list = json.data;
+        if (list.length === 0) {
+          content.innerHTML = '<div style="text-align:center;color:#888;padding:10px;">データが見つかりません</div>';
+          return;
+        }
+        let html = '';
+        list.forEach(item => {
+          let badge = '';
+          let rowStyle = '';
+          if (item.status === '休み') {
+            badge = '<span style="color:#aaa; border:1px solid #ddd; padding:2px 6px; border-radius:4px; font-size:11px;">休み</span>';
+            rowStyle = 'opacity: 0.6; background: #fafafa;';
+          } else if (item.status === '未入力') {
+            badge = '<span style="color:#d93025; border:1px solid #fce8e6; background:#fce8e6; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">未入力</span>';
+          } else {
+            badge = '<span style="color:#188038; border:1px solid #ceead6; background:#ceead6; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">済</span>';
+          }
+          html += `<div class="history-item" style="${rowStyle}">
+                     <div class="history-date">${item.month}/${item.day}</div>
+                     <div class="history-badge">${badge}</div>
+                     <div class="history-details">
+                       <span>店:${item.store}</span>
+                       <span>利:${item.riyaku}</span>
+                       <span>当:${item.tojitsu}</span>
+                     </div>
+                   </div>`;
+        });
+        content.innerHTML = html;
+      } catch(err) {
+        content.innerHTML = `<div style="color:#a33;padding:10px;">通信エラー: ${err.message}</div>`;
+      }
+    } else {
+      container.style.display = 'none';
+      btn.innerHTML = '<span class="material-icons">fact_check</span>選択月の入力状況を確認';
+    }
+  }
+
+  document.getElementById('memberName').addEventListener('change', resetHistoryUI);
+  document.getElementById('dateStr').addEventListener('change', resetHistoryUI);
+
+  function resetHistoryUI() {
+    document.getElementById('historyContainer').style.display = 'none';
+    document.getElementById('historyBtn').innerHTML = '<span class="material-icons">fact_check</span>選択月の入力状況を確認';
+  }
+
+  loadCenters();
+</script>
+</body>
+</html>
