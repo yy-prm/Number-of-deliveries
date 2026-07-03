@@ -153,8 +153,7 @@
   </div>
 
 <script>
-  // ここをデプロイしたGASのウェブアプリURLに差し替えてください
-  const API_URL = 'https://script.google.com/macros/s/AKfycbyO_qsQL17tE3_aotBjhifc0A9jLZP0WppFiG78gfEaTBlANZHCIHASNF421qtZWu26/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycby1ZL65LNqEDfl4oW58omAJ-moJ1aQy5R3TKif3YaTqkO8X5I99Pcm18vYiaFw0nN4N/exec';
   const DEFAULT_CENTER = '天理';
 
   function fillCountSelect(id){
@@ -175,18 +174,16 @@
   document.getElementById('todayLabel').innerText =
     today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
 
-  async function loadCenters(){
-    const res = await fetch(API_URL + '?action=centers');
-    const json = await res.json();
+  // センターは固定なので通信せずに即表示
+  function loadCenters(){
     const sel = document.getElementById('center');
-    if(json.ok){
-      json.data.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name; opt.text = name;
-        if(name === DEFAULT_CENTER) opt.selected = true;
-        sel.appendChild(opt);
-      });
-    }
+    const centers = ['天理'];
+    centers.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.text = name;
+      if(name === DEFAULT_CENTER) opt.selected = true;
+      sel.appendChild(opt);
+    });
     loadMembers();
   }
 
