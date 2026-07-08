@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
 <title>配送件数入力</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --theme-color: #4B9CB3;
@@ -24,9 +25,13 @@
   }
   .wrap { max-width: 480px; margin: 0 auto; }
 
-  .header { text-align: center; margin-bottom: 20px; }
+  .header { text-align: center; margin-bottom: 14px; }
   .header h1 { font-size: 19px; font-weight: bold; color: var(--theme-dark); margin: 0 0 4px; }
   .header .sub { font-size: 12px; color: #888; }
+
+  .login-area { text-align: center; margin-bottom: 14px; }
+  #googleSignInBtn { display: inline-block; }
+  #loginStatus { font-size: 12px; color: #777; margin-top: 6px; }
 
   .card {
     background: #fff; padding: 16px 16px 18px; margin-bottom: 14px;
@@ -109,6 +114,11 @@
       <div class="sub" id="todayLabel"></div>
     </div>
 
+    <div class="login-area">
+      <div id="googleSignInBtn"></div>
+      <div id="loginStatus"></div>
+    </div>
+
     <div class="card">
       <div class="card-title"><span class="material-icons">person</span>入力者・日付</div>
       <div class="field">
@@ -153,7 +163,8 @@
   </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycby1ZL65LNqEDfl4oW58omAJ-moJ1aQy5R3TKif3YaTqkO8X5I99Pcm18vYiaFw0nN4N/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzYiaXcG0Y7SY3p54cm5lhtg-_QuXOHW1PYIJBL5bdcDcU2RyS-OAPsl7kjjwgGkPTY/exec';
+  const GOOGLE_CLIENT_ID = '10544617656-amo7voanjtnl8pj88kvg269ihq4c8gcq.apps.googleusercontent.com';
   const DEFAULT_CENTER = '天理';
 
   function fillCountSelect(id){
@@ -331,7 +342,49 @@
     document.getElementById('historyBtn').innerHTML = '<span class="material-icons">fact_check</span>選択月の入力状況を確認';
   }
 
-  loadCenters();
+  // ===== Googleログイン関連 =====
+  function decodeJwt(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(escape(atob(base64))));
+  }
+
+  async function handleGoogleLogin(response) {
+    const payload = decodeJwt(response.credential);
+    const email = payload.email;
+    const loginStatus = document.getElementById('loginStatus');
+
+    const res = await fetch(API_URL + '?action=matchMember&email=' + encodeURIComponent(email));
+    const json = await res.json();
+    const matchedName = json.ok ? json.data : null;
+
+    if (matchedName) {
+      loginStatus.innerText = 'ログイン中: ' + matchedName + ' さん';
+      const trySelect = setInterval(() => {
+        const memberSel = document.getElementById('memberName');
+        const options = Array.from(memberSel.options).map(o => o.value);
+        if (options.includes(matchedName)) {
+          memberSel.value = matchedName;
+          clearInterval(trySelect);
+        }
+      }, 300);
+    } else {
+      loginStatus.innerText = 'このアカウントは未登録です。手動で選択してください。';
+    }
+  }
+
+  window.addEventListener('load', function() {
+    loadCenters();
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleLogin
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInBtn'),
+      { theme: 'outline', size: 'medium', text: 'signin_with' }
+    );
+    google.accounts.id.prompt();
+  });
 </script>
 </body>
 </html>
