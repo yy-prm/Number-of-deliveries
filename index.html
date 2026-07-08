@@ -185,7 +185,6 @@
   document.getElementById('todayLabel').innerText =
     today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
 
-  // センターは固定なので通信せずに即表示
   function loadCenters(){
     const sel = document.getElementById('center');
     const centers = ['天理'];
@@ -218,6 +217,11 @@
     });
     if(previousValue && json.data.includes(previousValue)){
       memberSel.value = previousValue;
+    } else {
+      const savedName = localStorage.getItem('lastMatchedMember');
+      if(savedName && json.data.includes(savedName)){
+        memberSel.value = savedName;
+      }
     }
   }
 
@@ -348,6 +352,17 @@
     return JSON.parse(decodeURIComponent(escape(atob(base64))));
   }
 
+  function selectMemberWhenReady(name) {
+    const trySelect = setInterval(() => {
+      const memberSel = document.getElementById('memberName');
+      const options = Array.from(memberSel.options).map(o => o.value);
+      if (options.includes(name)) {
+        memberSel.value = name;
+        clearInterval(trySelect);
+      }
+    }, 300);
+  }
+
   async function handleGoogleLogin(response) {
     const payload = decodeJwt(response.credential);
     const email = payload.email;
@@ -359,14 +374,8 @@
 
     if (matchedName) {
       loginStatus.innerText = 'ログイン中: ' + matchedName + ' さん';
-      const trySelect = setInterval(() => {
-        const memberSel = document.getElementById('memberName');
-        const options = Array.from(memberSel.options).map(o => o.value);
-        if (options.includes(matchedName)) {
-          memberSel.value = matchedName;
-          clearInterval(trySelect);
-        }
-      }, 300);
+      localStorage.setItem('lastMatchedMember', matchedName);
+      selectMemberWhenReady(matchedName);
     } else {
       loginStatus.innerText = 'このアカウントは未登録です。手動で選択してください。';
     }
@@ -374,6 +383,12 @@
 
   window.addEventListener('load', function() {
     loadCenters();
+
+    const savedName = localStorage.getItem('lastMatchedMember');
+    if (savedName) {
+      document.getElementById('loginStatus').innerText = savedName + ' さん(前回の記録)';
+      selectMemberWhenReady(savedName);
+    }
 
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
