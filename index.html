@@ -65,13 +65,6 @@
     text-align: center; font-weight: bold; padding: 13px 4px; border-radius: 14px;
   }
 
-  .holiday-link {
-    width: 100%; margin-top: 12px; padding: 10px; font-size: 13px; font-weight: bold;
-    color: var(--theme-dark); background: var(--theme-light); border: none;
-    border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .holiday-link:active { background: #d9ecf1; }
-
   #submitBtn {
     width: 100%; padding: 15px; font-size: 16px; font-weight: bold; font-family: inherit;
     color: #fff; background: var(--theme-color); border: none; border-radius: 30px; cursor: pointer;
@@ -90,6 +83,8 @@
     display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1.5px solid var(--amber);
     color: #8A6416; font-size: 11px; font-weight: bold; border-radius: 2px; transform: rotate(-4deg);
   }
+
+  #attendanceCard { margin-top: 20px; }
 
   #historyBtn {
     width: 100%; padding: 12px; margin-top: 20px; font-size: 14px; font-weight: bold;
@@ -113,6 +108,12 @@
   .history-details { display: flex; gap: 8px; color: #555; flex: 1; justify-content: flex-end; }
   .history-details span { background: var(--theme-light); padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;}
 
+  #holidayBtn {
+    width: 100%; padding: 12px; margin-top: 10px; font-size: 14px; font-weight: bold;
+    color: var(--theme-dark); background: transparent; border: 2px solid var(--theme-color);
+    border-radius: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  #holidayBtn:active { background: var(--theme-light); }
   .cal-day {
     background: #fff; border: 1px solid #ddd; border-radius: 8px; text-align: center;
     padding: 8px 0; font-size: 12px; cursor: pointer; user-select: none;
@@ -165,11 +166,6 @@
           <select id="tojitsu"></select>
         </div>
       </div>
-      <button id="holidayBtn" class="holiday-link"><span class="material-icons">event_busy</span>この月の休日を登録する</button>
-      <div id="holidayContainer" style="display:none; margin-top:12px;">
-        <div id="holidayCalendar" style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:12px;"></div>
-        <button id="holidaySubmitBtn" style="width:100%; padding:12px; font-size:14px; font-weight:bold; color:#fff; background:var(--theme-color); border:none; border-radius:24px;">選択した日を休日にする</button>
-      </div>
     </div>
 
     <button id="submitBtn">登録する</button>
@@ -193,6 +189,12 @@
     <button id="historyBtn"><span class="material-icons">fact_check</span>選択月の入力状況を確認</button>
     <div id="historyContainer" class="history-container">
       <div id="historyContent"></div>
+    </div>
+
+    <button id="holidayBtn"><span class="material-icons">event_busy</span>休日登録</button>
+    <div id="holidayContainer" class="history-container">
+      <div id="holidayCalendar" style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:12px;"></div>
+      <button id="holidaySubmitBtn" style="width:100%; padding:12px; font-size:14px; font-weight:bold; color:#fff; background:var(--theme-color); border:none; border-radius:24px;">選択した日を休日にする</button>
     </div>
   </div>
 
