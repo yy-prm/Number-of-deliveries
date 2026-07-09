@@ -65,13 +65,13 @@
     text-align: center; font-weight: bold; padding: 13px 4px; border-radius: 14px;
   }
 
-  #submitBtn {
-    width: 100%; padding: 15px; font-size: 16px; font-weight: bold; font-family: inherit;
-    color: #fff; background: var(--theme-color); border: none; border-radius: 30px; cursor: pointer;
-    box-shadow: 0 4px 12px rgba(75,156,179,0.3); transition: 0.2s;
+  .in-card-btn {
+    width: 100%; margin-top: 12px; padding: 13px; font-size: 15px; font-weight: bold; font-family: inherit;
+    color: #fff; background: var(--theme-color); border: none; border-radius: 24px; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(75,156,179,0.25); transition: 0.2s;
   }
-  #submitBtn:active { transform: scale(0.96); background: var(--theme-dark); }
-  #submitBtn:disabled { background: #bbb; box-shadow: none; }
+  .in-card-btn:active { transform: scale(0.97); background: var(--theme-dark); }
+  .in-card-btn:disabled { background: #bbb; box-shadow: none; }
 
   .result {
     margin-top: 14px; padding: 13px 16px; border-radius: var(--card-radius); font-size: 13.5px;
@@ -114,6 +114,15 @@
     border-radius: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   #holidayBtn:active { background: var(--theme-light); }
+  .cal-month-label {
+    text-align: center; font-size: 13px; font-weight: bold; color: var(--theme-dark); margin-bottom: 10px;
+  }
+  .cal-weekday-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 6px; }
+  .cal-weekday-row span {
+    text-align: center; font-size: 11px; font-weight: bold; color: #999;
+  }
+  .cal-weekday-row span.sun { color: #d9534f; }
+  .cal-weekday-row span.sat { color: #4B9CB3; }
   .cal-day {
     background: #fff; border: 1px solid #ddd; border-radius: 8px; text-align: center;
     padding: 8px 0; font-size: 12px; cursor: pointer; user-select: none;
@@ -166,9 +175,8 @@
           <select id="tojitsu"></select>
         </div>
       </div>
+      <button id="submitBtn" class="in-card-btn">登録する</button>
     </div>
-
-    <button id="submitBtn">登録する</button>
     <div id="result" class="result"></div>
 
     <div id="attendanceCard" class="card" style="display:none; border-top-color: var(--amber);">
@@ -183,7 +191,7 @@
           <select id="helpCount"></select>
         </div>
       </div>
-      <button id="attendanceSubmitBtn" style="width:100%; margin-top:12px; padding:12px; font-size:14px; font-weight:bold; color:#fff; background:var(--amber); border:none; border-radius:24px;">出勤・ヘルプ人数を登録</button>
+      <button id="attendanceSubmitBtn" class="in-card-btn" style="background:var(--amber);">出勤・ヘルプ人数を登録</button>
     </div>
 
     <button id="historyBtn"><span class="material-icons">fact_check</span>選択月の入力状況を確認</button>
@@ -193,13 +201,17 @@
 
     <button id="holidayBtn"><span class="material-icons">event_busy</span>休日登録</button>
     <div id="holidayContainer" class="history-container">
+      <div class="cal-month-label" id="calMonthLabel"></div>
+      <div class="cal-weekday-row">
+        <span class="sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="sat">土</span>
+      </div>
       <div id="holidayCalendar" style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:12px;"></div>
-      <button id="holidaySubmitBtn" style="width:100%; padding:12px; font-size:14px; font-weight:bold; color:#fff; background:var(--theme-color); border:none; border-radius:24px;">選択した日を休日にする</button>
+      <button id="holidaySubmitBtn" class="in-card-btn">選択した日を休日にする</button>
     </div>
   </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbx_D5rVusTyUL6c1HXARpLigH3zHbTZeZNx0irmWP5T0ALJwZeso6bvJYT3lRnr3Ai6/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxm92R4IfLEavhXD-Of_VDqptQArQ33VVa1NVpIrGUg5uC4VMpOIPimxUwZmE5ok2ZY/exec';
   const GOOGLE_CLIENT_ID = '10544617656-amo7voanjtnl8pj88kvg269ihq4c8gcq.apps.googleusercontent.com';
   const DEFAULT_CENTER = '天理';
 
@@ -442,6 +454,8 @@
     const lastDate = new Date(year, month + 1, 0).getDate();
     const startWeekday = firstDay.getDay();
 
+    document.getElementById('calMonthLabel').innerText = year + '年' + (month + 1) + '月';
+
     const cal = document.getElementById('holidayCalendar');
     cal.innerHTML = '';
     for (let i = 0; i < startWeekday; i++) {
@@ -460,6 +474,7 @@
   }
 
   document.getElementById('holidaySubmitBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('holidaySubmitBtn');
     const memberName = document.getElementById('memberName').value;
     if (!memberName) { alert('メンバーを選択してください'); return; }
 
@@ -478,14 +493,21 @@
     });
 
     const data = { type: 'holiday', center: document.getElementById('center').value, memberName, dates };
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(data)
-    });
-    const json = await res.json();
-    alert(json.ok ? json.data.detail : 'エラー: ' + json.error);
-    if (json.ok) document.getElementById('holidayContainer').style.display = 'none';
+
+    btn.disabled = true; btn.innerText = '登録中...';
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      alert(json.ok ? json.data.detail : 'エラー: ' + json.error);
+      if (json.ok) document.getElementById('holidayContainer').style.display = 'none';
+    } catch(err) {
+      alert('通信エラー: ' + err.message);
+    }
+    btn.disabled = false; btn.innerText = '選択した日を休日にする';
   });
 
   // ===== Googleログイン関連 =====
